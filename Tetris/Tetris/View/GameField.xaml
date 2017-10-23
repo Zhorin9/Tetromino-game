@@ -1,12 +1,16 @@
-﻿<UserControl x:Class="Tetris.View.GameField"
+﻿<UserControl
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Tetris.View"
+             xmlns:ViewModel="clr-namespace:Tetris.ViewModel" x:Class="Tetris.View.GameField"
              mc:Ignorable="d" FontSize="1"
              d:DesignHeight="600" d:DesignWidth="300">
-    <Grid Background="Gray" Margin="5" Name="GridField">
+    <UserControl.DataContext>
+        <ViewModel:GameFieldViewModel/>
+    </UserControl.DataContext>
+    <Grid Background="Gray" x:Name="GridField" >
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
             <ColumnDefinition/>
@@ -41,6 +45,6 @@
             <RowDefinition/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        
+
     </Grid>
 </UserControl>

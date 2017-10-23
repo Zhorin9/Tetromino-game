@@ -40,7 +40,6 @@ namespace Tetris.Model
             _CurrentPosition = new Point(5, 0);
         }
 
-        //Increase block position about _newPosition  
         public void IncreasePosition(Point _newPosition)
         {
             Point newCurrrentPosition = new Point(_CurrentPosition.X + _newPosition.X, _CurrentPosition.Y + _newPosition.Y);
