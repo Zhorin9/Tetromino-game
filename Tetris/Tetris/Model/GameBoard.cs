@@ -7,40 +7,25 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using Tetris.Model.Tetromino;
 
 namespace Tetris.Model
 {
-    class Board
+    class GameBoard
     {
-        private int _Rows { get; }
-        private int _Columns { get; }
-
-        private Rectangle[,] _BlockControls;
+        private readonly int _Rows, _Columns;
         private int[,] _ValueArray;
 
+        private DispatcherTimer _Timer;
         private List<string> _ListOfTetrisBlock { get; }
-        private TetrisBlock _CurrentBlock;
+        public TetrisBlock _CurrentBlock { get; private set; }
 
-        private Grid _TetrisGrid { get; set; }
-
-        public Board(Grid tetrisGrid)
+        public GameBoard(int rows, int columns)
         {
-            _TetrisGrid = tetrisGrid;
-            _Rows = tetrisGrid.RowDefinitions.Count;
-            _Columns = tetrisGrid.ColumnDefinitions.Count;
-            _BlockControls = new Rectangle[_Columns, _Rows];
-            _ValueArray = new int[_Columns, _Rows];
-
-            for (int i = 0; i < _Columns; i++)            
-                for (int j = 0; j < _Rows; j++)
-                {
-                    _BlockControls[i, j] = new Rectangle();
-                    Grid.SetRow(_BlockControls[i, j], j);
-                    Grid.SetColumn(_BlockControls[i, j], i);
-                    _ValueArray[i, j] = 0;
-                    _TetrisGrid.Children.Add(_BlockControls[i, j]);
-                }            
+            _Rows = rows;
+            _Columns = columns;
+            _ValueArray = new int[_Columns, _Rows];            
             _ListOfTetrisBlock = new List<string>()
             {
                 "Figure_I",
@@ -51,6 +36,23 @@ namespace Tetris.Model
                 "Figure_T",
                 "Figure_Z",
             };
+            _Timer = new DispatcherTimer();
+            _Timer.Interval = TimeSpan.FromSeconds(0.5);
+            _Timer.Tick += _Timer_Tick;
+        }
+        public void StartTimer()
+        {
+            _Timer.Start();
+            if (_CurrentBlock == null)
+                MakeNewBlock();
+        }
+        public void StopTimer()
+        {
+            _Timer.Stop();
+        }
+        private void _Timer_Tick(object sender, EventArgs e)
+        {
+            MoveDownBlockTick(new Point(0,1));
         }
         public void MakeNewBlock()
         {
@@ -79,12 +81,10 @@ namespace Tetris.Model
                 case "Figure_Z":
                     _CurrentBlock = new Figure_Z();
                     break;
-            }
-            DrawCurrentBlock();         
+            }     
         }
         public void MoveBlockLeftRight(Point newPosition)
         {
-            ClearCurrentBlock();
             foreach (Point p in _CurrentBlock.CurrentFigurePosition)
             {
                 if (newPosition.X == -1)
@@ -102,8 +102,7 @@ namespace Tetris.Model
                         newPosition.X = 0;
                 }
             }                         
-            _CurrentBlock.IncreasePosition(newPosition);       
-            DrawCurrentBlock();
+            _CurrentBlock.IncreasePosition(newPosition);
         }
         public bool MoveDownBlockTick(Point newPositon)
         {
@@ -120,28 +119,21 @@ namespace Tetris.Model
                     WriteToArray();
                     return true;
                 }
-
             }
-            ClearCurrentBlock();
             _CurrentBlock.IncreasePosition(newPositon);
-            DrawCurrentBlock();
             return false;
         }
         public void MoveDownBlockButton()
         {
             while (MoveDownBlockTick(new Point(0, 1)));
         }
-
         public void RotateShape()
         {
-            ClearCurrentBlock();
             Point[] auxilaryVariable = _CurrentBlock.Rotate();
 
             if(CheckCollistionWhileRotating(auxilaryVariable))
                 _CurrentBlock.ChangeShape(auxilaryVariable);                       
-            DrawCurrentBlock();
         }
-
         private bool CheckCollistionWhileRotating(Point[] auxiliaryVariable)
         {
             for (int i = 0; i < auxiliaryVariable.Length; i++)
@@ -153,10 +145,12 @@ namespace Tetris.Model
                     || (auxiliaryVariable[i].Y + _CurrentBlock.CurrentPosition.Y) > _Rows - 1)
                     return false;
                 //Check left side of block
-                else if (_ValueArray[Convert.ToInt32(auxiliaryVariable[i].X + _CurrentBlock.CurrentPosition.X), Convert.ToInt32(auxiliaryVariable[i].Y + _CurrentBlock.CurrentPosition.Y)] != 0)
+                else if (_ValueArray[Convert.ToInt32(auxiliaryVariable[i].X + _CurrentBlock.CurrentPosition.X), 
+                    Convert.ToInt32(auxiliaryVariable[i].Y + _CurrentBlock.CurrentPosition.Y)] != 0)
                     return  false;
                 //Check right side of block
-                else if (_ValueArray[Convert.ToInt32(auxiliaryVariable[i].X + _CurrentBlock.CurrentPosition.X), Convert.ToInt32(auxiliaryVariable[i].Y + _CurrentBlock.CurrentPosition.Y)] != 0)
+                else if (_ValueArray[Convert.ToInt32(auxiliaryVariable[i].X + _CurrentBlock.CurrentPosition.X),
+                    Convert.ToInt32(auxiliaryVariable[i].Y + _CurrentBlock.CurrentPosition.Y)] != 0)
                     return  false;
             }
             return true;
@@ -165,28 +159,11 @@ namespace Tetris.Model
         {
             for (int i = 0; i < _CurrentBlock.CurrentFigurePosition.Length; i++)
             {
-                _ValueArray[Convert.ToInt32(_CurrentBlock.CurrentFigurePosition[i].X), Convert.ToInt32(_CurrentBlock.CurrentFigurePosition[i].Y)] = _CurrentBlock.Value;
+                _ValueArray[Convert.ToInt32(_CurrentBlock.CurrentFigurePosition[i].X), 
+                    Convert.ToInt32(_CurrentBlock.CurrentFigurePosition[i].Y)] = _CurrentBlock.Value;
             }
-            ClearLine(CheckCompletedLine());
+            //ClearLine(CheckCompletedLine());
             MakeNewBlock();
-        }
-        private void ClearCurrentBlock()
-        {
-            for (int i = 0; i < _CurrentBlock.CurrentFigurePosition.Length; i++)
-            {
-                int x = Convert.ToInt32(_CurrentBlock.CurrentFigurePosition[i].X);
-                int y = Convert.ToInt32(_CurrentBlock.CurrentFigurePosition[i].Y);
-                _BlockControls[x, y].Fill = null;
-            }
-        }
-        private void DrawCurrentBlock()
-        {
-            for (int i = 0; i < _CurrentBlock.CurrentFigurePosition.Length; i++)
-            {
-                int x = Convert.ToInt32(_CurrentBlock.CurrentFigurePosition[i].X);
-                int y = Convert.ToInt32(_CurrentBlock.CurrentFigurePosition[i].Y);
-                _BlockControls[x, y].Fill = _CurrentBlock.Color;
-            }
         }
         private List<int> CheckCompletedLine()
         {
@@ -205,6 +182,7 @@ namespace Tetris.Model
             }
             return rowsToClear;
         }
+        /*
         private void ClearLine(List<int> rowsToClear)
         {
             if (rowsToClear.Count == 0) ;
@@ -223,6 +201,7 @@ namespace Tetris.Model
 
             //FallingBlock(Convert.ToInt32(minRow));
         }
+        */
         private void FallingBlock(int clearedRow)
         {
             for (int i = clearedRow ; i > 0; i--)
@@ -235,41 +214,3 @@ namespace Tetris.Model
         }
     }
 }
-
-
-
-
-
-/*
-                    for (int i = 0; i<_Rows; i++)
-                    {
-                        for (int j = 0; j<_Columns; j++)
-                        {
-                            Console.Write("{0} ", _ValueArray[j, i]);
-                        }
-                        Console.WriteLine();
-
-                    }*/
-
-
-
-/* 
- * 
- * 
-    private bool CheckCollision()
-    {
-        foreach (Point p in _CurrentBlock.CurrentPosition)
-        {
-            if (_ValueArray[Convert.ToInt32(p.X - 1), Convert.ToInt32(p.Y)] != 0)
-                return true;
-            if (p.X == 0)
-                return true;
-            if (_ValueArray[Convert.ToInt32(p.X + 1), Convert.ToInt32(p.Y)] != 0)
-                return true;
-            if (p.X == _Columns - 1)
-                return true;
-        }
-        return false;
-    }
-*/
- 

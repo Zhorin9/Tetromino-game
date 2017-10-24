@@ -7,10 +7,7 @@
              xmlns:ViewModel="clr-namespace:Tetris.ViewModel" x:Class="Tetris.View.GameField"
              mc:Ignorable="d" FontSize="1"
              d:DesignHeight="600" d:DesignWidth="300">
-    <UserControl.DataContext>
-        <ViewModel:GameFieldViewModel/>
-    </UserControl.DataContext>
-    <Grid Background="Gray" x:Name="GridField" >
+    <Grid Background="Gray" Name="GridField">
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
             <ColumnDefinition/>

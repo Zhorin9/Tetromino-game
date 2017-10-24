@@ -26,7 +26,6 @@ namespace Tetris.Model
                     currentPosition[i] = new Point( _CurrentShape[i].X + _CurrentPosition.X, _CurrentShape[i].Y + _CurrentPosition.Y);
                 }
                 return currentPosition;
-
             }
         }
         protected Point[] _CurrentShape;
@@ -39,13 +38,11 @@ namespace Tetris.Model
         {            
             _CurrentPosition = new Point(5, 0);
         }
-
         public void IncreasePosition(Point _newPosition)
         {
             Point newCurrrentPosition = new Point(_CurrentPosition.X + _newPosition.X, _CurrentPosition.Y + _newPosition.Y);
             _CurrentPosition = newCurrrentPosition;
         }
-
         public void ChangeShape(Point[] newShape)
         {
             for(int i = 0; i < _CurrentShape.Length; i++)
